@@ -1,0 +1,43 @@
+close all ; clearvars ; clc;
+
+sensor_width = 5.6166e-3/2;
+
+f1 = 31.049;
+h1 = 3.303;
+l1 = f1;
+f2 = 170.233;
+h2 = 4.034;
+l2 = 98.259;
+f3 = 57.608;
+h3 = 3.004;
+l3 = 353.434;
+
+h12 = 63.91;
+
+figure(1)
+axis equal
+set(gca, 'XAxisLocation', 'origin')
+
+Lens11 = ThinLens(f1,16,l1);
+Lens12 = ThinLens(f1,16,l1 + h1);
+
+Lens21 = ThinLens(f2,22,l2);
+Lens22 = ThinLens(f2,22,l2 + h2);
+
+Lens31 = ThinLens(f3,22.9,l3);
+Lens32 = ThinLens(f3,22.9,l3 + h3);
+
+
+Lens11.Plot;
+Lens12.Plot;
+Lens21.Plot;
+Lens22.Plot;
+Lens31.Plot;
+Lens32.Plot;
+
+hold on
+
+y01 = sensor_width;
+theta01 = atan(sensor_width/(-f1*1e-3));
+
+plot[]

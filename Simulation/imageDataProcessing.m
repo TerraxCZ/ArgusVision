@@ -62,7 +62,7 @@ scatter(HgBarvy,simHg_pix,'blue','filled')
 grid on
 scatter(589.262,2941,'yellow','filled')
 fplot(@(lambda) 4.632*lambda + 205.5, [365 590],'--r')
-fplot(@(lambda) 4.509*lambda + 194.2, [365 579],'--b')
+fplot(@(lambda) 4.666*lambda + 193, [365 579],'--b')
 xlabel('lambda [nm]')
 ylabel('pos [pix]')
 title('Pozice špiček pix = f(lambda)    -   simulace vs. skutečnost (Hg lampa)')

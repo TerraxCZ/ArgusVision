@@ -29,7 +29,7 @@ grid0 = RefractionGrid(0,271.028,30,20);
 %grid0 = RefractionGrid(30, 300, 20, 30);
 
 %       ThinLens(f [mm], d[mm], DistanceFromOrigin[mm])
-lens1 = ThinLens(30,16,30);
+lens1 = ThinLens(30,16,45);
 %lens1 = ThinLens(31.0485,16,30)
 
 j = -1;

@@ -46,11 +46,12 @@ classdef ThinLens < handle
             obj.PlotHandles = [];
         end
 
-        function delta_s = RayAngle(obj, delta, y)
+        function delta_s = RayAngle(obj, delta, h)
             %DeleteLens Summary of this method goes here
             %   Detailed explanation goes here
 
             delta_s = atan(tan(delta)-(h/obj.FocalLength));
+
         end
 
         function RayTo(obj, h, to, delta, colour)
