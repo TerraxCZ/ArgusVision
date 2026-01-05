@@ -78,9 +78,9 @@ classdef HyperCube
         end
 
         %% Spektrum v bodě - Vykreslit %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function spec = ShowSpectrum(obj, x, y)
+        function ShowSpectrum(obj, x, y)
             % Vykreslí spektrum ve specifikovaném spexelu [x,y]
-            % Zároveň Spektrum vrátí v struct {x,y}
+
 
             arguments
                 obj
@@ -124,7 +124,7 @@ classdef HyperCube
         end
 
         %% Monochromatický slice Hyperkostkou ve zvoleném Lambda - Vykreslit
-        function slice = ShowSlice(obj, Lambda_nm)
+        function ShowSlice(obj, Lambda_nm)
             % Zobrazí monochromatický řez zkrz HyperKostku v Lambda_nm
             % Zároveň vrátí monochromatický řez jako výstup
             arguments
@@ -163,7 +163,79 @@ classdef HyperCube
             
             [~, li] = min(abs(obj.lambda_axis - Lambda)); %Najde index nejbližší λ k zadané target_lambda
             slice = obj.cube(:, :, li);   % Obrázek v této vrstvě
-            
+
+        end
+
+
+        %% RGB náhled hyperspektrálního snímku - Vykreslit %%%%%%%%%%%%%%%%
+        function ShowAsRGB(obj)
+            % ShowAsRGB Vytvoří RGB náhled hyperspektrálního snímku
+            % Tato metoda kombinuje tři monochromatické řezy (červený, zelený a modrý)
+            % při výchozích hodnotách vlnových délek.
+            %
+            % Výstupy:
+            %   rgbImage - 3D matice [x, y, 3] představující obrázek ve formátu RGB
+        
+            arguments
+                obj
+            end
+
+            lambdaR = 650;  % Vlnová délka pro červenou složku
+            lambdaG = 550;  % Vlnová délka pro zelenou složku
+            lambdaB = 450;  % Vlnová délka pro modrou složku
+        
+        
+            % Extrakce jednotlivých monochromatických vrstev
+            redSlice = obj.GetSlice(lambdaR);
+            greenSlice = obj.GetSlice(lambdaG);
+            blueSlice = obj.GetSlice(lambdaB);
+        
+            % Normalizace intenzity do rozsahu [0, 1]
+            redNorm = mat2gray(redSlice);   % Červená barva
+            greenNorm = mat2gray(greenSlice); % Zelená barva
+            blueNorm = mat2gray(blueSlice);  % Modrá barva
+        
+            % Kombinace do RGB obrázku
+            rgbImage = cat(3, redNorm, greenNorm, blueNorm);
+        
+            % Zobrazení výsledku
+            figure("Name", "RGB Preview");
+            imshow(rgbImage);
+            title(sprintf('RGB Náhled (R=%.1f nm, G=%.1f nm, B=%.1f nm)', lambdaR, lambdaG, lambdaB));
+        end
+
+
+                %% RGB náhled hyperspektrálního snímku - Vrátit (Pro GUI) %
+        function rgbImage = GetAsRGB(obj)
+            % ShowAsRGB Vytvoří RGB náhled hyperspektrálního snímku
+            % Tato metoda kombinuje tři monochromatické řezy (červený, zelený a modrý)
+            % při výchozích hodnotách vlnových délek.
+            %
+            % Výstupy:
+            %   rgbImage - 3D matice [x, y, 3] představující obrázek ve formátu RGB
+        
+            arguments
+                obj
+            end
+
+            lambdaR = 650;  % Vlnová délka pro červenou složku
+            lambdaG = 550;  % Vlnová délka pro zelenou složku
+            lambdaB = 450;  % Vlnová délka pro modrou složku
+        
+        
+            % Extrakce jednotlivých monochromatických vrstev
+            redSlice = obj.GetSlice(lambdaR);
+            greenSlice = obj.GetSlice(lambdaG);
+            blueSlice = obj.GetSlice(lambdaB);
+        
+            % Normalizace intenzity do rozsahu [0, 1]
+            redNorm = mat2gray(redSlice);   % Červená barva
+            greenNorm = mat2gray(greenSlice); % Zelená barva
+            blueNorm = mat2gray(blueSlice);  % Modrá barva
+        
+            % Kombinace do RGB obrázku
+            rgbImage = cat(3, redNorm, greenNorm, blueNorm);
+        
         end
         
 
