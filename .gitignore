@@ -1,0 +1,26 @@
+# MATLAB temporary / autosave files
+*.asv
+*.m~
+*.autosave
+*.tmp
+
+# MATLAB code generation
+slprj/
+codegen/
+
+# Simulink
+*.slxc
+*.slx.r*
+*.mdl.r*
+*.sltx
+
+# MATLAB live scripts cache
+.mlxautosave
+
+# Figures / session data
+*.fig
+*.mat
+
+# OS bordel
+.DS_Store
+Thumbs.db
