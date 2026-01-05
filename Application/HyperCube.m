@@ -77,9 +77,10 @@ classdef HyperCube
 
         end
 
-        %% Spektrum v bodě %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function spec = spectrum(obj, x, y)
-            % Vrátí spektrum ve specifikovaném spexelu [x,y]
+        %% Spektrum v bodě - Vykreslit %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function spec = ShowSpectrum(obj, x, y)
+            % Vykreslí spektrum ve specifikovaném spexelu [x,y]
+            % Zároveň Spektrum vrátí v struct {x,y}
 
             arguments
                 obj
@@ -87,26 +88,45 @@ classdef HyperCube
                 y (1,1) double {mustBePositive, mustBeInteger}
             end
 
-            disp(obj.cube)
+             % Ověřit, že x,y jsou v rozsahu kostky
+            if x > obj.x_dim || y > obj.y_dim
+                error('Index out of range: x in [1..%d], y in [1..%d]', obj.x_dim, obj.y_dim);
+            end
+            
+            spec.x = obj.lambda_axis;               % Hodnoty vlnových délek λ [nm] (osa x)
+            spec.y = squeeze(obj.cube(y,x,:))';     % Hodnoty intenzit I [0-255] (osa y) 
+
+            figure("Name",'Spectrum')
+            plot(spec.x, spec.y);
+            xlabel('λ [nm]');
+            ylabel('Intensity [-]');
+            title(sprintf('Spectrum at [%d, %d]', x, y));
+        end
+
+        %% Spektrum v bodě - Pouze vrátit (pro GUI) %%%%%%%%%%%%%%%%%%%%%%%
+        function spec = GetSpectrum(obj, x, y)
+            % Vrátí spektrum ve specifikovaném spexelu [x,y]
+            % Vrátí spektrum v struct {x,y} (Bez vykreslení)
+
+            arguments
+                obj
+                x (1,1) double {mustBePositive, mustBeInteger}
+                y (1,1) double {mustBePositive, mustBeInteger}
+            end
 
              % Ověřit, že x,y jsou v rozsahu kostky
             if x > obj.x_dim || y > obj.y_dim
                 error('Index out of range: x in [1..%d], y in [1..%d]', obj.x_dim, obj.y_dim);
             end
             
-            spec = squeeze(obj.cube(y,x,:));
-
-            figure("Name",'Spectrum')
-            plot(obj.lambda_axis, spec);
-            xlabel('λ [nm]');
-            ylabel('Intensity [-]');
-            title(sprintf('Spectrum at [%d, %d]', x, y));
+            spec.x = obj.lambda_axis;               % Hodnoty vlnových délek λ [nm] (osa x)
+            spec.y = squeeze(obj.cube(y,x,:))';     % Hodnoty intenzit I [0-255] (osa y)
         end
 
-        %% Monochromatický slice Hyperkostkou ve zvoleném Lambda
-        function slice = slice(obj, Lambda_nm)
-            % Creates a monochromatic slice through the HyperCube
-            % YOLO
+        %% Monochromatický slice Hyperkostkou ve zvoleném Lambda - Vykreslit
+        function slice = ShowSlice(obj, Lambda_nm)
+            % Zobrazí monochromatický řez zkrz HyperKostku v Lambda_nm
+            % Zároveň vrátí monochromatický řez jako výstup
             arguments
                 obj
                 Lambda_nm (1,1) double {mustBePositive}
@@ -123,6 +143,27 @@ classdef HyperCube
 
             imshow(slice)
             title(sprintf('Řez v \\lambda=%.2f nm (sloupec %d)', obj.lambda_axis(li), li));
+        end
+
+
+        %% Monochromatický slice Hyperkostkou ve zvoleném Lambda - Pouze vrátit (Pro GUI)
+        function slice = GetSlice(obj, Lambda_nm)
+            % Zobrazí monochromatický řez zkrz HyperKostku v Lambda_nm
+            % Zároveň vrátí monochromatický řez jako výstup
+            arguments
+                obj
+                Lambda_nm (1,1) double {mustBePositive}
+            end
+            
+            Lambda = Lambda_nm;
+
+            if Lambda < obj.LAMBDA_MIN || Lambda > obj.LAMBDA_MAX
+                error('Lambda must be in range (%d - %d) [nm]',obj.LAMBDA_MIN, obj.LAMBDA_MAX)
+            end
+            
+            [~, li] = min(abs(obj.lambda_axis - Lambda)); %Najde index nejbližší λ k zadané target_lambda
+            slice = obj.cube(:, :, li);   % Obrázek v této vrstvě
+            
         end
         
 
