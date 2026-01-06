@@ -24,3 +24,6 @@ codegen/
 # OS bordel
 .DS_Store
 Thumbs.db
+
+# Složky
+Application/GCODEs/
