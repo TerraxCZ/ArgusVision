@@ -1,4 +1,4 @@
-function GenerateHyperGcode(scanHeight, spectralBinning)
+function GenerateHyperGcode_MANUAL(scanHeight, spectralBinning)
     % GENERATEGCODEFORENDER Generuje GCODE pro Ender3 Pro s posuvem kamery (směrem dolů)
     % Funkce vytvoří GCODE soubor, který začne na počáteční výšce (93 mm + bezpečnost
     % + výška skenování) a následně provede skenování směrem dolů.
@@ -63,7 +63,7 @@ function GenerateHyperGcode(scanHeight, spectralBinning)
         'G90 ; Absolutní režim polohování', ...
         sprintf('G1 Z%.2f F%d ; Vyjíždění kamery na počáteční výšku Z', startHeight, MOVE_SPEED), ...
         'M17 ; Zamknutí motorů pro udržení polohy osy Z', ...
-        'M0 Stiskněte tlačítko pro zahájení skenování' ...
+        'M0 Press to START' ...
     };
 
     % Generování jednotlivých kroků směrem dolů
@@ -80,8 +80,15 @@ function GenerateHyperGcode(scanHeight, spectralBinning)
     gcode{end+1} = 'M84 ; Vypnutí motorů';
 
     %% Zápis GCODE do souboru
-    fileName = sprintf('Scan_GCODE_From%.2f_To%.2f_Binning%d.gcode', startHeight, finalHeight, spectralBinning);
-    fileID = fopen(fileName, 'w');
+    % Výstupní složka v kořeni projektu
+    outDir = fullfile("GCODEs");
+    if ~exist(outDir, "dir")    %
+        mkdir(outDir);          % Když složka GCODEs neexistuje v kořenové složce, tak ji to vytvoří
+    end                         %
+
+    fileName = sprintf('MAN_Hyper_Scan_%d_To%d_Bng%d.gcode', startHeight, finalHeight, spectralBinning);
+    filePath = fullfile(outDir, fileName);
+    fileID = fopen(filePath, 'w');
 
     if fileID == -1
         error('Chyba při vytváření souboru GCODE!');
