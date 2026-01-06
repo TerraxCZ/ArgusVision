@@ -22,9 +22,10 @@ classdef HyperCube
     end
 
     properties (Constant, Access = private)
-        LAMBDA_MIN = 400;   %                           % OG = 400
-        LAMBDA_MAX = 650;   % Defaultní fixní hodnoty   % OG = 850
-        FIRST_PIXEL = 1;    %
+        LAMBDA_MIN = 400;   
+        LAMBDA_MAX = 701;   
+        FIRST_PIXEL = 2665;
+        LAST_PIXEL = 4024; 
     end
 
     methods
@@ -51,19 +52,23 @@ classdef HyperCube
 
             % Načte první soubor pro zjištění rozměrů
             img0 = imread(fullfile(folder, names{1}));
-            
+            % ořez na platný spektrální rozsah
+            img0 = img0(:, obj.FIRST_PIXEL:obj.LAST_PIXEL);
+            imshow(img0)
+
             x_dim     = size(img0, 1);      % výška = x
             Lambda_dim = size(img0, 2);     % šířka = λ
             y_dim = numel(names);           % šířka = y (počet snímků)
 
 
             % Lineární osa λ (zleva doprava)
-            lambda_axis = LAMBDA_MIN + ((1:Lambda_dim) - FIRST_PIXEL) * (LAMBDA_MAX - LAMBDA_MIN) / (Lambda_dim - 1);
+            lambda_axis = obj.LAMBDA_MIN + ((1:Lambda_dim) - 1) * (obj.LAMBDA_MAX - obj.LAMBDA_MIN) / (Lambda_dim - 1);
             
             cube = zeros( y_dim, x_dim, Lambda_dim, 'single');
             
             for yi = 1:y_dim
                 img = imread(fullfile(folder, names{yi}));
+                img = img(:, obj.FIRST_PIXEL:obj.LAST_PIXEL); % ořez
                 cube(yi, :, :) = single(img); % ulož [y, x, λ]
             end
 
