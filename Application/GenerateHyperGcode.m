@@ -20,8 +20,10 @@ function GenerateHyperGcode(scanHeight, spectralBinning)
     MIN_HEIGHT = 93;     % Minimální výška od podložky (v mm)
     CAMERA_RESERVE = 10; % Rezerva pro bezpečnost (v mm)
     F_STOP_WIDTH = 8.3414e-3; % Velikost štěrbiny při binning=1 (v mm)
+    F_STOP_SET_STEP = 0.005;  % polovina kroku nastavení štěrbiny (v mm)  
     MAGNIFICATION = 0.3346;   % Zvětšení objektivu kamery
     MOVE_SPEED = 120;         % Rychlost pohybu v mm/min (doporučeno pro osu Z)
+    
 
     % Počáteční výška pro skenování = MIN_HEIGHT + rezerva + výška skenování
     startHeight = MIN_HEIGHT + CAMERA_RESERVE + scanHeight;
@@ -33,9 +35,15 @@ function GenerateHyperGcode(scanHeight, spectralBinning)
     if startHeight > 250
         error('Výška [%d mm] překračuje maximální hodnotu tiskárny (250 mm).', startHeight);
     end
+    
+    % Výpočet velikosti štěrbiny
+    slitSize_mm = F_STOP_WIDTH * spectralBinning;
+
+    % Zaokrouhlí velikost štěrbiny na nastavení na kotouči 
+    slitsize_STEPS = (round(slitSize_mm/F_STOP_SET_STEP)*F_STOP_SET_STEP)*10^2;
 
     % Výpočet posunu kamery na 1 "pixel"
-    pixelShift_mm = (F_STOP_WIDTH * spectralBinning) / MAGNIFICATION;
+    pixelShift_mm = (slitSize_mm) / MAGNIFICATION;
 
     % Počet kroků kamery během skenování
     numSteps = ceil((startHeight - finalHeight) / pixelShift_mm);
@@ -46,7 +54,8 @@ function GenerateHyperGcode(scanHeight, spectralBinning)
     fprintf('Počáteční výška (start Z): %.2f mm\n', startHeight);
     fprintf('Konečná výška (end Z): %.2f mm\n', finalHeight);
     fprintf('Posun na pixel (uloha Z) [mm]: %.5f\n', pixelShift_mm);
-    fprintf('Počet snímků: %d\n\n', numSteps);
+    fprintf('Počet snímků: %d\n', numSteps);
+    fprintf('Nastavte štěrbinu na: %.1f\n\n', slitsize_STEPS);
 
     %% Generování GCODE
     gcode = { ...
