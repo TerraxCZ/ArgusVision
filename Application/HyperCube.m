@@ -19,28 +19,34 @@ classdef HyperCube
         x_dim (1,1) double {mustBePositive, mustBeInteger} = 1      %
         y_dim (1,1) double {mustBePositive, mustBeInteger} = 1      % 1 jsou placeholdery
         n_lambda (1,1) double {mustBePositive, mustBeInteger} = 1   %
+        binning (1,1)
     end
 
     properties (Constant, Access = private)
         LAMBDA_MIN = 400;   
         LAMBDA_MAX = 701;   
         FIRST_PIXEL = 2665;
-        LAST_PIXEL = 4024; 
+        LAST_PIXEL = 4024;
+
+        % Kalibrace pix = A * λ + B
+        A = 4.51;          % px / nm
+        B = 861;           % px offset
+
     end
 
     methods
         %% Konstruktor %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function obj = HyperCube(folder)
+        function obj = HyperCube(folder, binning)
             % Konstruktor načte hyperspektrální kostku s Bitmap ve
             % specifikované složce
        
             arguments
                 folder (1,1) string
+                binning (1,1) double {mustBePositive, mustBeInteger} = 10
             end
 
-            LAMBDA_MIN = obj.LAMBDA_MIN;
-            LAMBDA_MAX = obj.LAMBDA_MAX;
-            FIRST_PIXEL = obj.FIRST_PIXEL;
+            BIN_X = binning;
+            BIN_L = binning;
 
             files = dir(fullfile(folder, '*.bmp')); % načte soubory typu .bmp z poskytnuté složky
 
@@ -51,35 +57,59 @@ classdef HyperCube
             names = sort({files.name}); % seřadí názvy dle abecedy (měly by mít ascending čísla)
 
             % Načte první soubor pro zjištění rozměrů
-            img0 = imread(fullfile(folder, names{1}));
-            % ořez na platný spektrální rozsah
-            img0 = img0(:, obj.FIRST_PIXEL:obj.LAST_PIXEL);
-            imshow(img0)
+            img0_orig = imread(fullfile(folder, names{1}));
 
-            x_dim     = size(img0, 1);      % výška = x
-            Lambda_dim = size(img0, 2);     % šířka = λ
-            y_dim = numel(names);           % šířka = y (počet snímků)
+            % --- spektrální ořez: zarovnání doprava, přebytek se zahodí zleva ---
+            raw_width    = obj.LAST_PIXEL - obj.FIRST_PIXEL + 1;
+            crop_left    = mod(raw_width, BIN_L);           % kolik sloupců zahodit vlevo
+            usable_start = obj.FIRST_PIXEL + crop_left;     % nový začátek
+            usable_end   = obj.LAST_PIXEL;                  % pravý okraj držíme
+            lambda_use   = usable_end - usable_start + 1;   % počet sloupců po ořezu
 
-
-            % Lineární osa λ (zleva doprava)
-            lambda_axis = obj.LAMBDA_MIN + ((1:Lambda_dim) - 1) * (obj.LAMBDA_MAX - obj.LAMBDA_MIN) / (Lambda_dim - 1);
-            
-            cube = zeros( y_dim, x_dim, Lambda_dim, 'single');
-            
-            for yi = 1:y_dim
-                img = imread(fullfile(folder, names{yi}));
-                img = img(:, obj.FIRST_PIXEL:obj.LAST_PIXEL); % ořez
-                cube(yi, :, :) = single(img); % ulož [y, x, λ]
+            if mod(lambda_use, BIN_L) ~= 0
+                error('Šířka po ořezu (%d) není dělitelná %d.', lambda_use, BIN_L);
             end
 
-            % Přiřazení lokálních proměnných do Propreties
-            obj.x_dim = x_dim; 
-            obj.y_dim = y_dim; 
-            obj.n_lambda = Lambda_dim; 
-            obj.cube = cube; 
-            obj.lambda_axis = lambda_axis;
-           
+            % --- osa lambda z kalibrace pix = A*λ + B, průměr v každém binu ---
+            pix_keep       = usable_start:usable_end;           % pixely, které bereme
+            lambda_per_px  = (pix_keep - obj.B) / obj.A;        % λ pro každý sloupec
+            n_lambda       = lambda_use / BIN_L;
+            lambda_axis    = mean(reshape(lambda_per_px, BIN_L, n_lambda), 1);
 
+            % --- ořez a binning v ose x ---
+            x_raw = size(img0_orig, 1);
+            x_use = floor(x_raw / BIN_X) * BIN_X;
+            if x_use < BIN_X
+                error('Příliš malá výška pro binning %d (x_raw=%d).', BIN_X, x_raw);
+            end
+            x_dim = x_use / BIN_X;
+
+            y_dim = numel(names);
+            cube = zeros(y_dim, x_dim, n_lambda, 'single');
+
+            for yi = 1:y_dim
+                img = imread(fullfile(folder, names{yi}));
+                img = img(:, usable_start:usable_end); % spektrální ořez zprava zarovnaný
+                img = img(1:x_use, :);                  % ořez na celé bloky v x
+
+                % binning ve spektru (sloupce)
+                imgL = mean(reshape(img, x_use, BIN_L, n_lambda), 2); % [x_use x 1 x n_lambda]
+                imgL = squeeze(imgL);                                 % [x_use x n_lambda]
+
+                % binning v x (řádky)
+                imgX = mean(reshape(imgL, BIN_X, x_dim, n_lambda), 1); % [1 x x_dim x n_lambda]
+                imgX = squeeze(imgX);                                  % [x_dim x n_lambda]
+
+                cube(yi, :, :) = single(imgX); % uložíme [y, x, λ]
+            end
+
+            % nastavení properties
+            obj.cube        = cube;
+            obj.lambda_axis = lambda_axis;
+            obj.x_dim       = x_dim;
+            obj.y_dim       = y_dim;
+            obj.n_lambda    = n_lambda;
+            obj.binning     = binning;
         end
 
         %% Spektrum v bodě - Vykreslit %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,6 +132,7 @@ classdef HyperCube
             spec.y = squeeze(obj.cube(y,x,:))';     % Hodnoty intenzit I [0-255] (osa y) 
 
             figure("Name",'Spectrum')
+            grid on
             plot(spec.x, spec.y);
             xlabel('λ [nm]');
             ylabel('Intensity [-]');
@@ -145,6 +176,7 @@ classdef HyperCube
             
             [~, li] = min(abs(obj.lambda_axis - Lambda)); %Najde index nejbližší λ k zadané target_lambda
             slice = obj.cube(:, :, li);   % Obrázek v této vrstvě
+            slice = uint8(slice);   % Přeformátuje čísla do UINT8, aby se to zobrazilo jako B&W
 
             imshow(slice)
             title(sprintf('Řez v \\lambda=%.2f nm (sloupec %d)', obj.lambda_axis(li), li));
@@ -168,6 +200,7 @@ classdef HyperCube
             
             [~, li] = min(abs(obj.lambda_axis - Lambda)); %Najde index nejbližší λ k zadané target_lambda
             slice = obj.cube(:, :, li);   % Obrázek v této vrstvě
+            slice = uint8(slice);   % Přeformátuje čísla do UINT8, aby se to zobrazilo jako B&W
 
         end
 
@@ -210,7 +243,7 @@ classdef HyperCube
         end
 
 
-                %% RGB náhled hyperspektrálního snímku - Vrátit (Pro GUI) %
+        %% RGB náhled hyperspektrálního snímku - Vrátit (Pro GUI) %%%%%%%%%
         function rgbImage = GetAsRGB(obj)
             % ShowAsRGB Vytvoří RGB náhled hyperspektrálního snímku
             % Tato metoda kombinuje tři monochromatické řezy (červený, zelený a modrý)
