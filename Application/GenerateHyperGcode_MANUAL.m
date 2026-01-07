@@ -18,7 +18,7 @@ function GenerateHyperGcode_MANUAL(scanHeight, spectralBinning)
 
     %% Parametry tiskárny a kamery
     MIN_HEIGHT = 93;     % Minimální výška od podložky (v mm)
-    CAMERA_RESERVE = 10; % Rezerva pro bezpečnost (v mm)
+    CAMERA_RESERVE = 16; % Rezerva pro bezpečnost (v mm)
     F_STOP_WIDTH = 8.3414e-3; % Velikost štěrbiny při binning=1 (v mm)
     F_STOP_SET_STEP = 0.005;  % polovina kroku nastavení štěrbiny (v mm)  
     MAGNIFICATION = 0.3346;   % Zvětšení objektivu kamery
