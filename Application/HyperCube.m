@@ -132,8 +132,8 @@ classdef HyperCube
             spec.y = squeeze(obj.cube(y,x,:))';     % Hodnoty intenzit I [0-255] (osa y) 
 
             figure("Name",'Spectrum')
-            grid on
             plot(spec.x, spec.y);
+            grid on
             xlabel('λ [nm]');
             ylabel('Intensity [-]');
             title(sprintf('Spectrum at [%d, %d]', x, y));
@@ -177,7 +177,9 @@ classdef HyperCube
             [~, li] = min(abs(obj.lambda_axis - Lambda)); %Najde index nejbližší λ k zadané target_lambda
             slice = obj.cube(:, :, li);   % Obrázek v této vrstvě
             slice = uint8(slice);   % Přeformátuje čísla do UINT8, aby se to zobrazilo jako B&W
-
+            
+            % Zobrazení výsledku
+            figure("Name", "Monochromatic Slice");
             imshow(slice)
             title(sprintf('Řez v \\lambda=%.2f nm (sloupec %d)', obj.lambda_axis(li), li));
         end
